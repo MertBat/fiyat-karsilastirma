@@ -1,5 +1,5 @@
-import { scrapePrice } from '../../lib/scraper';
-import db from '../../lib/db';
+import { scrapePrice } from '../../../lib/scraper';
+import db from '../../../lib/db';
 
 export default async function handler(request, response) {
   if (request.method !== 'GET' && request.method !== 'POST') {
