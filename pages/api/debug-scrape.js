@@ -60,7 +60,13 @@ export default async function handler(req, res) {
           const priceData = await scrapePrice(url);
           results.push({ retailer, url, status: 'success', ...priceData });
         } catch (err) {
-          results.push({ retailer, url, status: 'error', error: err.message });
+          results.push({
+            retailer,
+            url,
+            status: 'error',
+            error: err.message,
+            htmlSnippet: err.htmlSnippet || null,
+          });
         }
       }
       await closeBrowser();
