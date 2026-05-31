@@ -1,4 +1,4 @@
-import { scrapePrice } from '../../../lib/scraper';
+import { scrapePrice, closeBrowser } from '../../../lib/scraper';
 import db from '../../../lib/db';
 
 export default async function handler(request, response) {
@@ -52,5 +52,7 @@ export default async function handler(request, response) {
   } catch (error) {
     console.error('Daily cron error:', error);
     return response.status(500).json({ success: false, error: error.message });
+  } finally {
+    await closeBrowser();
   }
 }

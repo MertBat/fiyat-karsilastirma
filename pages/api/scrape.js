@@ -1,5 +1,5 @@
 import db from '../../lib/db';
-import { scrapePrice } from '../../lib/scraper';
+import { scrapePrice, closeBrowser } from '../../lib/scraper';
 
 export default async function handler(request, response) {
   if (request.method !== 'POST') {
@@ -44,5 +44,7 @@ export default async function handler(request, response) {
   } catch (error) {
     console.error('Scraping error:', error);
     return response.status(500).json({ success: false, error: error.message });
+  } finally {
+    await closeBrowser();
   }
 }

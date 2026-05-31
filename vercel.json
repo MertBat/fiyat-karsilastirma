@@ -1,4 +1,14 @@
 {
+  "functions": {
+    "pages/api/scrape.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "pages/api/cron/daily.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
   "crons": [
     {
       "path": "/api/cron/daily",
