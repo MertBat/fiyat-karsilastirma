@@ -6,7 +6,8 @@ export default async function handler(request, response) {
     return response.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { groupId } = request.body;
+  // retailer is optional — if provided, only scrape that one store
+  const { groupId, retailer: targetRetailer } = request.body;
 
   if (!groupId) {
     return response.status(400).json({ success: false, error: 'groupId is required' });
@@ -20,27 +21,28 @@ export default async function handler(request, response) {
       return response.status(404).json({ success: false, error: 'Ürün grubu bulunamadı.' });
     }
 
-    const urlMap = [
+    let urlMap = [
       { retailer: 'Vatan Bilgisayar', url: group.vatanUrl },
       { retailer: 'MediaMarkt', url: group.mediamarktUrl },
       { retailer: 'Teknosa', url: group.teknosaUrl }
     ].filter((e) => e.url);
 
-    const results = await Promise.allSettled(
-      urlMap.map(async ({ retailer, url }) => {
+    if (targetRetailer) {
+      urlMap = urlMap.filter((e) => e.retailer === targetRetailer);
+    }
+
+    const results = [];
+    for (const { retailer, url } of urlMap) {
+      try {
         const priceData = await scrapePrice(url);
         await db.savePrice(groupId, retailer, priceData);
-        return { retailer, price: priceData.price, currency: priceData.currency };
-      })
-    );
+        results.push({ retailer, price: priceData.price, currency: priceData.currency });
+      } catch (err) {
+        results.push({ retailer, error: err.message });
+      }
+    }
 
-    const summary = results.map((r, i) =>
-      r.status === 'fulfilled'
-        ? { retailer: urlMap[i].retailer, ...r.value }
-        : { retailer: urlMap[i].retailer, error: r.reason?.message }
-    );
-
-    return response.status(200).json({ success: true, results: summary });
+    return response.status(200).json({ success: true, results });
   } catch (error) {
     console.error('Scraping error:', error);
     return response.status(500).json({ success: false, error: error.message });

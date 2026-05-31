@@ -1,16 +1,13 @@
 {
   "functions": {
     "pages/api/scrape.js": {
-      "maxDuration": 90,
-      "memory": 512
+      "maxDuration": 300
     },
     "pages/api/cron/daily.js": {
-      "maxDuration": 90,
-      "memory": 512
+      "maxDuration": 300
     },
     "pages/api/debug-scrape.js": {
-      "maxDuration": 90,
-      "memory": 512
+      "maxDuration": 300
     }
   },
   "crons": [

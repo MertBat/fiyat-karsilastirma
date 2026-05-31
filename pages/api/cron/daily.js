@@ -1,4 +1,3 @@
-import { scrapePrice, closeBrowser } from '../../../lib/scraper';
 import db from '../../../lib/db';
 
 export default async function handler(request, response) {
@@ -18,27 +17,37 @@ export default async function handler(request, response) {
       });
     }
 
+    const baseUrl = process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : 'http://localhost:3000';
+
     const results = [];
 
+    // Call /api/scrape once per group+retailer — each is a separate serverless
+    // invocation with its own 60s timeout (Hobby plan compatible)
     for (const group of groups) {
-      const urlMap = [
+      const retailers = [
         { retailer: 'Vatan Bilgisayar', url: group.vatanUrl },
-        { retailer: 'MediaMarkt', url: group.mediamarktUrl },
-        { retailer: 'Teknosa', url: group.teknosaUrl }
-      ].filter((e) => e.url);
+        { retailer: 'MediaMarkt',       url: group.mediamarktUrl },
+        { retailer: 'Teknosa',          url: group.teknosaUrl },
+      ].filter((r) => r.url);
 
-      for (const { retailer, url } of urlMap) {
-        const blocked = await db.checkBlocked(retailer);
-        if (blocked) {
-          results.push({ groupId: group.groupId, retailer, status: 'skipped', reason: 'blocked' });
-          continue;
-        }
+      for (const { retailer } of retailers) {
         try {
-          const priceData = await scrapePrice(url);
-          await db.savePrice(group.groupId, retailer, priceData);
-          results.push({ groupId: group.groupId, retailer, status: 'success', price: priceData.price });
+          const res = await fetch(`${baseUrl}/api/scrape`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ groupId: group.groupId, retailer }),
+          });
+          const data = await res.json();
+          const detail = data.results?.[0];
+          if (detail?.error) {
+            results.push({ groupId: group.groupId, retailer, status: 'error', reason: detail.error });
+          } else {
+            results.push({ groupId: group.groupId, retailer, status: 'success', price: detail?.price });
+          }
         } catch (err) {
-          console.error(`Failed to scrape ${url}:`, err.message);
+          console.error(`Failed to scrape ${retailer} for ${group.groupId}:`, err.message);
           results.push({ groupId: group.groupId, retailer, status: 'error', reason: err.message });
         }
       }
@@ -47,12 +56,10 @@ export default async function handler(request, response) {
     return response.status(200).json({
       message: 'Günlük scraping tamamlandı.',
       time: new Date().toISOString(),
-      results
+      results,
     });
   } catch (error) {
     console.error('Daily cron error:', error);
     return response.status(500).json({ success: false, error: error.message });
-  } finally {
-    await closeBrowser();
   }
 }

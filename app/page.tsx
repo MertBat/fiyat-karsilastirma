@@ -103,13 +103,16 @@ export default function Home() {
       const data = await res.json();
       if (!data.success) throw new Error(data.error);
 
-      // Immediately scrape
+      // Immediately scrape each retailer separately
       setScraping(data.groupId);
-      await fetch('/api/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: data.groupId })
-      });
+      const newUrls = [
+        { retailer: 'Vatan Bilgisayar', url: vatanUrl.trim() || null },
+        { retailer: 'MediaMarkt', url: mediamarktUrl.trim() || null },
+        { retailer: 'Teknosa', url: teknosaUrl.trim() || null },
+      ].filter((r) => r.url);
+      for (const { retailer } of newUrls) {
+        await scrapeRetailer(data.groupId, retailer);
+      }
       setScraping(null);
 
       setName('');
@@ -126,17 +129,29 @@ export default function Home() {
     }
   };
 
+  const scrapeRetailer = async (groupId: string, retailer: string) => {
+    await fetch('/api/scrape', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ groupId, retailer })
+    });
+  };
+
   const handleScrapeNow = async (group: ProductGroup) => {
     setScraping(group.groupId);
     setError('');
     try {
-      const res = await fetch('/api/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ groupId: group.groupId })
-      });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      // Fire one request per retailer sequentially — each stays within Vercel's 60s limit
+      const retailers = [
+        { retailer: 'Vatan Bilgisayar', url: group.vatanUrl },
+        { retailer: 'MediaMarkt', url: group.mediamarktUrl },
+        { retailer: 'Teknosa', url: group.teknosaUrl },
+      ].filter((r) => r.url);
+
+      for (const { retailer } of retailers) {
+        await scrapeRetailer(group.groupId, retailer);
+      }
+
       await fetchGroups();
       if (selectedGroup?.groupId === group.groupId) {
         await loadPrices(group.groupId);
