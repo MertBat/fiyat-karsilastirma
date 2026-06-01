@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 
 const PriceChart = dynamic(() => import('../components/PriceChart'), { ssr: false });
 
@@ -236,6 +237,9 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            <Link href="/logs" className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white/50 hover:text-white/80 hover:bg-white/15 transition-all">
+              📋 Loglar
+            </Link>
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-blue-300">Vatan</span>
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-red-500/20 border border-red-400/30 text-red-300 hidden sm:inline-flex">MediaMarkt</span>
             <span className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-green-500/20 border border-green-400/30 text-green-300 hidden sm:inline-flex">Teknosa</span>

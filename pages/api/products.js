@@ -31,6 +31,16 @@ export default async function handler(req, res) {
 
     try {
       const groupId = await db.addProductGroup(name.trim(), vatanUrl, mediamarktUrl, teknosaUrl);
+      await db.logEvent('product', 'success', {
+        action: 'add',
+        groupId,
+        name: name.trim(),
+        retailers: [
+          vatanUrl && 'Vatan',
+          mediamarktUrl && 'MediaMarkt',
+          teknosaUrl && 'Teknosa',
+        ].filter(Boolean),
+      }).catch(() => {});
       return res.status(201).json({ success: true, groupId });
     } catch (error) {
       console.error('POST /api/products error:', error);
@@ -45,6 +55,10 @@ export default async function handler(req, res) {
     }
     try {
       await db.deleteProductGroup(groupId);
+      await db.logEvent('product', 'info', {
+        action: 'delete',
+        groupId,
+      }).catch(() => {});
       return res.status(200).json({ success: true });
     } catch (error) {
       console.error('DELETE /api/products error:', error);
