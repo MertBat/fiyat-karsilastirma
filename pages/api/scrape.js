@@ -2,15 +2,24 @@ import db from '../../lib/db';
 import { scrapePrice, closeBrowser } from '../../lib/scraper';
 
 export default async function handler(request, response) {
+  // ── Always return JSON, even for catastrophic errors ──────────────────────
+  const safeJson = (status, body) => {
+    try {
+      return response.status(status).json(body);
+    } catch {
+      return response.status(status).setHeader('Content-Type', 'application/json').send(JSON.stringify(body));
+    }
+  };
+
   if (request.method !== 'POST') {
-    return response.status(405).json({ error: 'Method not allowed' });
+    return safeJson(405, { error: 'Method not allowed' });
   }
 
   // retailer is optional — if provided, only scrape that one store
   const { groupId, retailer: targetRetailer } = request.body;
 
   if (!groupId) {
-    return response.status(400).json({ success: false, error: 'groupId is required' });
+    return safeJson(400, { success: false, error: 'groupId is required' });
   }
 
   const scrapeStart = Date.now();
@@ -20,7 +29,7 @@ export default async function handler(request, response) {
     const group = groups.find((g) => g.groupId === groupId);
 
     if (!group) {
-      return response.status(404).json({ success: false, error: 'Ürün grubu bulunamadı.' });
+      return safeJson(404, { success: false, error: 'Ürün grubu bulunamadı.' });
     }
 
     let urlMap = [
@@ -61,7 +70,7 @@ export default async function handler(request, response) {
       }
     }
 
-    return response.status(200).json({ success: true, results });
+    return safeJson(200, { success: true, results });
   } catch (error) {
     console.error('Scraping error:', error);
     await db.logEvent('scrape', 'error', {
@@ -69,7 +78,7 @@ export default async function handler(request, response) {
       error: error.message,
       durationMs: Date.now() - scrapeStart,
     }).catch(() => {});
-    return response.status(500).json({ success: false, error: error.message });
+    return safeJson(500, { success: false, error: error.message });
   } finally {
     await closeBrowser();
   }

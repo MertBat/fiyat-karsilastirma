@@ -54,9 +54,22 @@ export default async function handler(request, response) {
         try {
           const res = await fetch(`${baseUrl}/api/scrape`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
             body: JSON.stringify({ groupId: group.groupId, retailer }),
           });
+
+          // Guard against HTML responses (Vercel error pages, etc.)
+          const contentType = res.headers.get('content-type') || '';
+          if (!contentType.includes('application/json')) {
+            const text = await res.text();
+            throw new Error(
+              `/api/scrape non‑JSON yanıt döndü (${res.status}). İlk 200 karakter: ${text.slice(0, 200)}`
+            );
+          }
+
           const data = await res.json();
           const detail = data.results?.[0];
           if (detail?.error) {
