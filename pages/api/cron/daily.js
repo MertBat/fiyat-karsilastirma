@@ -57,6 +57,7 @@ export default async function handler(request, response) {
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
+              'x-vercel-protection-bypass': process.env.VERCEL_AUTOMATION_BYPASS_SECRET || '',
             },
             body: JSON.stringify({ groupId: group.groupId, retailer }),
           });
