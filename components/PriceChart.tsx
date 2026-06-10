@@ -84,13 +84,20 @@ const PriceChart = ({ prices = [] }: PriceChartProps) => {
 
   prices.forEach((p) => {
     const date = formatDate(p.timestamp);
-    if (!byDate[date]) byDate[date] = { date };
+    if (!byDate[date]) {
+      byDate[date] = { date, _ts: new Date(p.timestamp).getTime() };
+    }
     byDate[date][p.retailer] = p.price;
   });
 
   const data = Object.values(byDate).sort(
-    (a, b) => new Date(a.date as string).getTime() - new Date(b.date as string).getTime()
+    (a, b) => (a._ts as number) - (b._ts as number)
   );
+
+  // Strip internal _ts before passing to chart
+  data.forEach((d) => {
+    delete d._ts;
+  });
 
   return (
     <ResponsiveContainer width="100%" height={280}>
@@ -101,6 +108,7 @@ const PriceChart = ({ prices = [] }: PriceChartProps) => {
           tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.35)' }}
           axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
           tickLine={false}
+          interval="preserveStartEnd"
         />
         <YAxis
           tickFormatter={(v: number) => v.toLocaleString('tr-TR')}

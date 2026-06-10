@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import NotificationPrompt from '../components/NotificationPrompt';
 
 const PriceChart = dynamic(() => import('../components/PriceChart'), { ssr: false });
 
@@ -237,6 +238,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap justify-end">
+            <NotificationPrompt />
             <Link href="/logs" className="text-[11px] font-medium px-2.5 py-1 rounded-full bg-white/10 border border-white/20 text-white/50 hover:text-white/80 hover:bg-white/15 transition-all">
               📋 Loglar
             </Link>
