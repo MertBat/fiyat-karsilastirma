@@ -54,6 +54,7 @@ export default async function handler(request, response) {
           groupId,
           groupName: group.name,
           retailer,
+          url,
           price: priceData.price,
           durationMs: Date.now() - perRetailerStart,
         }).catch(() => {});
@@ -64,7 +65,9 @@ export default async function handler(request, response) {
           groupId,
           groupName: group.name,
           retailer,
+          url,
           error: err.message,
+          httpStatus: err.httpStatus || null,
           durationMs: Date.now() - perRetailerStart,
         }).catch(() => {});
       }

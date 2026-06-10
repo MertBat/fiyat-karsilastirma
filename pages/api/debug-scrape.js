@@ -1,15 +1,13 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import https from 'https';
+import { buildHeaders } from '../../lib/scraper.js';
 
 const axiosInstance = axios.create({
   httpsAgent: new https.Agent({ rejectUnauthorized: false }),
   timeout: 15000,
-  headers: {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-    'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-  },
+  headers: buildHeaders(),
+  validateStatus: () => true,
 });
 
 export default async function handler(req, res) {
